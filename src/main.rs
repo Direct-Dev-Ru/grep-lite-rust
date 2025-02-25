@@ -122,7 +122,8 @@ fn main() {
     for (i, line) in input_text.lines().enumerate() {
         let is_matching;
         if clap_args.regular {
-            let contains_substr = re.find(&search_term);
+            let contains_substr = re.find(line);
+            // println!("{:?}", contains_substr);
             is_matching = match contains_substr {
                 Some(_) => true,
                 None => false,
