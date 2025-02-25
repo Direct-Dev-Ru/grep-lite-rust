@@ -1,5 +1,6 @@
 use clap::Parser;
 // use std::env;
+use regex::Regex;
 use std::fs;
 use std::io::{self, BufRead};
 
@@ -13,7 +14,7 @@ struct Cli {
 
     /// regular option
     #[arg(short, long)]
-    use_regular: bool,
+    regular: bool,
 
     /// pattern to search
     #[arg(short, long)]
@@ -42,6 +43,9 @@ fn main() {
     // println!("{:?}", clap_args);
 
     let search_term = clap_args.pattern;
+
+    let re = Regex::new(&search_term).unwrap();
+
     // если тут ничего передали stdin то читать из входного потока
     let file_path_or_text = clap_args.input;
 
@@ -116,7 +120,17 @@ fn main() {
     let ctx_lines = ctx_count as usize; // number of lines in context after and before
 
     for (i, line) in input_text.lines().enumerate() {
-        if line.contains(&search_term) {
+        let is_matching;
+        if clap_args.regular {
+            let contains_substr = re.find(&search_term);
+            is_matching = match contains_substr {
+                Some(_) => true,
+                None => false,
+            }
+        } else {
+            is_matching = line.contains(&search_term);
+        }
+        if is_matching {
             // println!("{} : {}", i, line);
             tags.push(i as u32);
             // Создаем контекст для текущей строки
@@ -142,11 +156,17 @@ fn main() {
 
         for (_j, line) in _vec.iter().enumerate() {
             if _j == middle_index {
-                println!("Match_{}. line_{}.====> {}", i + 1, line.0, line.1);
+                println!("Match_{}. line_{}. > {}", i + 1, line.0, line.1);
             } else {
-                let diff = ((middle_index as i32)-(_j as i32)).abs();
+                let diff = ((middle_index as i32) - (_j as i32)).abs();
                 // println!("{}#{}#{}",diff,_j,middle_index);
-                println!("Match_{}. line_{}.{} {}", i + 1, line.0, ">>".repeat(diff as usize), line.1);
+                println!(
+                    "Match_{}. line_{}. {} {}",
+                    i + 1,
+                    line.0,
+                    ">>".repeat(diff as usize),
+                    line.1
+                );
             }
         }
         // Разделитель между группами совпадений

@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 atty = "0.2.14"
 clap = { version = "4.4.6", features = ["derive"] }
+regex = "1.11.1"
