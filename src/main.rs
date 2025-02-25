@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::env;
+// use std::env;
 use std::fs;
 use std::io::{self, BufRead};
 
@@ -144,7 +144,9 @@ fn main() {
             if _j == middle_index {
                 println!("Match_{}. line_{}.====> {}", i + 1, line.0, line.1);
             } else {
-                println!("Match_{}. line_{}.      {}", i + 1, line.0, line.1);
+                let diff = ((middle_index as i32)-(_j as i32)).abs();
+                // println!("{}#{}#{}",diff,_j,middle_index);
+                println!("Match_{}. line_{}.{} {}", i + 1, line.0, ">>".repeat(diff as usize), line.1);
             }
         }
         // Разделитель между группами совпадений
