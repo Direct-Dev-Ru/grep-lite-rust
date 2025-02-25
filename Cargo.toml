@@ -1,0 +1,8 @@
+[package]
+name = "grep-lite-1"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+atty = "0.2.14"
+clap = { version = "4.4.6", features = ["derive"] }
