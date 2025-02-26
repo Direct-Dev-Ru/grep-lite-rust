@@ -1,8 +1,10 @@
+use std::process;
 use clap::Parser;
 // use std::env;
 use regex::Regex;
 use std::fs;
-use std::io::{self, BufRead};
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
 
 /// Basic example of a CLI tool using clap
 #[derive(Parser, Debug)]
@@ -33,45 +35,47 @@ struct Cli {
     ctx_count: Option<i32>,
 }
 
+fn read_file_lines_as_strs(input: &str) -> io::Result<Vec<String>> {
+    // Open the file
+    let file = File::open(input)?;
+    let reader = BufReader::new(file);
+
+    // Collect lines into a vector of Strings
+    let lines: Vec<String> = reader
+        .lines() // Iterate over lines
+        .collect::<Result<_, _>>()?; // Handle potential IO errors during reading
+
+    Ok(lines)
+}
+
 fn main() {
-    // Parse command-line arguments into the struct
+    _ = read_file_lines_as_strs;
+
     let clap_args = Cli::parse();
-
-    // Собираем аргументы командной строки в вектор
-    // let args: Vec<String> = env::args().collect();
-    // println!("{:?}", args);
-    // println!("{:?}", clap_args);
-
     let search_term = clap_args.pattern;
-
     let re = Regex::new(&search_term).unwrap();
-
-    // если тут ничего передали stdin то читать из входного потока
     let file_path_or_text = clap_args.input;
-
     let ctx_count = match clap_args.ctx_count {
         Some(count) => count,
         None => 0,
     };
-
     let output_type = match &clap_args.output_type {
         // Клонируем значение, если оно допустимо
         Some(o_type) if o_type == "text" || o_type == "json" => o_type.clone(),
         _ => "text".to_string(), // Используем "text" по умолчанию
     };
-
     _ = output_type.to_string();
 
-    // Проверяем, что пользователь предоставил достаточно аргументов
-    // if args.len() < 2 {
-    //   eprintln!("Usage: {} <search_term> [file_path]", args[0]);
-    //   return;
-    // }
+    // Read the file and handle errors
+    // let example_lines = match read_file_lines_as_strs("test.txt") {
+    //     Ok(lines) => lines,
+    //     Err(e) => {
+    //         eprintln!("Error reading file: {}", e);
+    //         return;
+    //     }
+    // };
+    
 
-    // let search_term = &args[1];
-    // let file_path_or_text = args.get(2); // Опциональный путь к файлу
-
-    // Чтение текста: либо из stdin, либо из файла
     let mut input_text = if atty::is(atty::Stream::Stdin) {
         // Если stdin не используется (нет pipe), читаем из файла
         match file_path_or_text {
@@ -109,16 +113,16 @@ fn main() {
     };
 
     if input_text == "error_reading_file" {
+        // process::exit(1); // Exit with non-zero code for failure
         input_text = match file_path_or_text {
-            Some(path) => path,
+            Some(content) => content,
             None => "".to_string(),
         };
     }
 
     let mut tags: Vec<u32> = vec![];
     let mut ctx: Vec<Vec<(i32, String)>> = vec![];
-    let ctx_lines = ctx_count as usize; // number of lines in context after and before
-
+    let ctx_lines = ctx_count as usize;
     for (i, line) in input_text.lines().enumerate() {
         let is_matching;
         if clap_args.regular {
@@ -147,11 +151,8 @@ fn main() {
         }
     }
 
-    // вывод результата
-
-    // println!("{:?}", ctx);
     println!("{}", "-".repeat(50));
-    // Поиск совпадений и вывод с контекстом
+
     for (i, _vec) in ctx.iter().enumerate() {
         let middle_index = _vec.len() / 2; // Индекс средней строки
 
@@ -173,4 +174,6 @@ fn main() {
         // Разделитель между группами совпадений
         println!("{}", "-".repeat(50));
     }
+
+    process::exit(0); // Exit with 0 for success
 }
